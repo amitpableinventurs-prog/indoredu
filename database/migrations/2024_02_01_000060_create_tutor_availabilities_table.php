@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('tutor_availabilities', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tutor_profile_id')->constrained()->cascadeOnDelete();
+            $table->unsignedTinyInteger('day_of_week');
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('tutor_time_offs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tutor_profile_id')->constrained()->cascadeOnDelete();
+            $table->date('date');
+            $table->time('start_time')->nullable();
+            $table->time('end_time')->nullable();
+            $table->string('reason')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('tutor_time_offs');
+        Schema::dropIfExists('tutor_availabilities');
+    }
+};
