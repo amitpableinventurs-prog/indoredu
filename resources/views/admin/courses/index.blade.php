@@ -29,6 +29,7 @@
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ $course->title }}</h3>
                                         <x-status-badge :status="$course->status" />
+                                        <x-level-badge :level="$course->level" />
                                     </div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                         by {{ $course->tutorProfile->user->name ?? 'Unknown tutor' }} &middot; {{ $course->subject->name ?? 'No subject' }}

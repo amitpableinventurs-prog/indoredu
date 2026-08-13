@@ -17,6 +17,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContentReportController;
 use App\Http\Controllers\CourseCatalogController;
+use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
@@ -130,6 +131,7 @@ Route::middleware(['auth', 'verified', 'throttle:120,1'])->group(function () {
 
     // Course enrollment (guarded to students inside the controller)
     Route::post('/courses/{course:slug}/enroll', [EnrollmentController::class, 'store'])->name('courses.enroll');
+    Route::post('/courses/{course:slug}/reviews', [CourseReviewController::class, 'store'])->name('courses.reviews.store');
 
     // Payments
     Route::get('/payments/history', [PaymentController::class, 'history'])->name('payments.history');

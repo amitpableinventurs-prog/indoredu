@@ -32,19 +32,19 @@
     <section class="border-y border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
             <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ \App\Models\TutorProfile::approved()->count() }}+</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['tutors'] }}+</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Verified tutors</p>
             </div>
             <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ \App\Models\Subject::count() }}+</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['subjects'] }}+</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Subjects</p>
             </div>
             <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ \App\Models\Booking::where('status', 'completed')->count() }}+</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['sessions_completed'] }}+</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Sessions completed</p>
             </div>
             <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format(\App\Models\Review::where('is_approved', true)->avg('rating') ?? 5, 1) }}/5</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($stats['avg_rating'], 1) }}/5</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Average rating</p>
             </div>
         </div>

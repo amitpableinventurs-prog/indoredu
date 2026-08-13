@@ -3,7 +3,7 @@
     <div class="flex items-start gap-4">
         <div class="w-14 h-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-semibold text-lg shrink-0 overflow-hidden">
             @if ($u->avatar)
-                <img src="{{ asset('storage/'.$u->avatar) }}" alt="{{ $u->name }}" class="w-full h-full object-cover">
+                <img src="{{ asset('storage/'.$u->avatar) }}" alt="{{ $u->name }}" class="w-full h-full object-cover" loading="lazy">
             @else
                 {{ $u->initials() }}
             @endif

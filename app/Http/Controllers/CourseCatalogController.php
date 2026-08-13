@@ -27,7 +27,18 @@ class CourseCatalogController extends Controller
             $query->where('level', $level);
         }
 
-        $courses = $query->latest()->paginate(12)->withQueryString();
+        if ($grade = $request->string('grade')->trim()->value()) {
+            $query->where('grade', $grade);
+        }
+
+        match ($request->string('sort')->trim()->value()) {
+            'price_asc' => $query->orderBy('price'),
+            'price_desc' => $query->orderByDesc('price'),
+            'rating' => $query->orderByDesc('rating_avg'),
+            default => $query->latest(),
+        };
+
+        $courses = $query->paginate(12)->withQueryString();
         $categories = SubjectCategory::with('subjects')->orderBy('name')->get();
 
         return view('courses.index', compact('courses', 'categories'));
@@ -37,7 +48,17 @@ class CourseCatalogController extends Controller
     {
         abort_unless($course->status === Course::STATUS_PUBLISHED, 404);
         $course->load(['tutorProfile.user', 'subject']);
+        $course->load(['reviews' => fn ($q) => $q->with('studentProfile.user')->latest()]);
 
-        return view('courses.show', compact('course'));
+        $isEnrolled = false;
+        $myReview = null;
+
+        if (auth()->check() && auth()->user()->isStudent()) {
+            $profile = auth()->user()->studentProfile;
+            $isEnrolled = $course->enrollments()->where('student_profile_id', $profile->id)->where('status', '!=', 'cancelled')->exists();
+            $myReview = $isEnrolled ? $course->reviews->firstWhere('student_profile_id', $profile->id) : null;
+        }
+
+        return view('courses.show', compact('course', 'isEnrolled', 'myReview'));
     }
 }

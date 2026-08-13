@@ -52,21 +52,33 @@
                         <div>
                             <x-input-label for="level" value="Level" />
                             <select id="level" name="level" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                                @foreach (['beginner' => 'Beginner', 'intermediate' => 'Intermediate', 'advanced' => 'Advanced', 'all_levels' => 'All levels'] as $value => $label)
+                                @foreach (\App\Models\Course::LEVELS as $value => $label)
                                     <option value="{{ $value }}" @selected(old('level', $course->level) === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Choose "Crash Course" for a fast-paced, exam-focused track.</p>
                             <x-input-error :messages="$errors->get('level')" class="mt-1" />
                         </div>
                         <div>
-                            <x-input-label for="duration_minutes" value="Session duration" />
-                            <select id="duration_minutes" name="duration_minutes" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                                @foreach ([30, 60, 90, 120] as $minutes)
-                                    <option value="{{ $minutes }}" @selected(old('duration_minutes', $course->duration_minutes) == $minutes)>{{ $minutes }} minutes</option>
+                            <x-input-label for="grade" value="Grade / class" />
+                            <select id="grade" name="grade" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                @foreach (\App\Models\Course::GRADES as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('grade', $course->grade) === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            <x-input-error :messages="$errors->get('duration_minutes')" class="mt-1" />
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Helps students on the same board/class find this course.</p>
+                            <x-input-error :messages="$errors->get('grade')" class="mt-1" />
                         </div>
+                    </div>
+
+                    <div>
+                        <x-input-label for="duration_minutes" value="Session duration" />
+                        <select id="duration_minutes" name="duration_minutes" required class="mt-1 block w-full sm:w-64 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            @foreach ([30, 60, 90, 120] as $minutes)
+                                <option value="{{ $minutes }}" @selected(old('duration_minutes', $course->duration_minutes) == $minutes)>{{ $minutes }} minutes</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('duration_minutes')" class="mt-1" />
                     </div>
 
                     <div class="grid sm:grid-cols-2 gap-4">

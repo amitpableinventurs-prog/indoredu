@@ -2,14 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Review;
+use App\Models\Subject;
 use App\Models\SubjectCategory;
 use App\Models\TutorProfile;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
     public function index()
     {
+        $stats = Cache::remember('home.stats', now()->addMinutes(10), fn () => [
+            'tutors' => TutorProfile::approved()->count(),
+            'subjects' => Subject::count(),
+            'sessions_completed' => Booking::where('status', 'completed')->count(),
+            'avg_rating' => Review::where('is_approved', true)->avg('rating') ?? 5,
+        ]);
+
         $featuredTutors = TutorProfile::query()
             ->approved()
             ->with('user', 'subjects')
@@ -29,6 +39,6 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        return view('home', compact('featuredTutors', 'categories', 'testimonials'));
+        return view('home', compact('featuredTutors', 'categories', 'testimonials', 'stats'));
     }
 }

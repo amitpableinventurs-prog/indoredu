@@ -28,6 +28,7 @@
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <p class="font-semibold text-gray-900 dark:text-gray-100">{{ $course->title }}</p>
                                             <x-status-badge :status="$course->status" />
+                                            <x-level-badge :level="$course->level" />
                                         </div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ $course->subject?->name ?? '—' }} &middot; ₹{{ number_format($course->price, 2) }} &middot; {{ $course->enrollments_count }} enrolled</p>
                                         @if ($course->status === 'rejected' && $course->rejection_reason)
