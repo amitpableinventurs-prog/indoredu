@@ -18,6 +18,7 @@
                             <x-nav-link :href="route('courses.index')" :active="request()->routeIs('courses.index')">{{ __('Courses') }}</x-nav-link>
                             <x-nav-link :href="route('student.bookings.index')" :active="request()->routeIs('student.bookings.*')">{{ __('My Bookings') }}</x-nav-link>
                             <x-nav-link :href="route('student.reports.index')" :active="request()->routeIs('student.reports.*')">{{ __('Progress') }}</x-nav-link>
+                            <x-nav-link :href="route('student.games.index')" :active="request()->routeIs('student.games.*')">{{ __('Games') }}</x-nav-link>
                         @elseif (auth()->user()->isTutor())
                             <x-nav-link :href="route('tutor.bookings.index')" :active="request()->routeIs('tutor.bookings.*')">{{ __('Bookings') }}</x-nav-link>
                             <x-nav-link :href="route('tutor.courses.index')" :active="request()->routeIs('tutor.courses.*')">{{ __('Courses') }}</x-nav-link>
@@ -107,6 +108,7 @@
                     <x-responsive-nav-link :href="route('courses.index')">{{ __('Courses') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('student.bookings.index')">{{ __('My Bookings') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('student.reports.index')">{{ __('Progress') }}</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('student.games.index')">{{ __('Games') }}</x-responsive-nav-link>
                 @elseif (auth()->user()->isTutor())
                     <x-responsive-nav-link :href="route('tutor.bookings.index')">{{ __('Bookings') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('tutor.courses.index')">{{ __('Courses') }}</x-responsive-nav-link>

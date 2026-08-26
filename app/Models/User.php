@@ -131,6 +131,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(NotificationPreference::class);
     }
 
+    public function gameScores(): HasMany
+    {
+        return $this->hasMany(GameScore::class);
+    }
+
     public function contentReportsFiled(): HasMany
     {
         return $this->hasMany(ContentReport::class, 'reporter_id');

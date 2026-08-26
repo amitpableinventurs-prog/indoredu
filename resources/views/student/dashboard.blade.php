@@ -65,7 +65,18 @@
                 </div>
 
                 <!-- Recommended tutors -->
-                <div class="lg:col-span-1">
+                <div class="lg:col-span-1 space-y-6">
+                    <a href="{{ route('student.games.index') }}"
+                       class="block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-md transition">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center justify-center w-11 h-11 rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 text-xl shrink-0">🎮</div>
+                            <div>
+                                <p class="font-semibold text-gray-900 dark:text-gray-100">Educational Games</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Practice math, vocabulary & more</p>
+                            </div>
+                        </div>
+                    </a>
+
                     <x-card title="Recommended tutors">
                         @if ($recommended->isEmpty())
                             <x-empty-state title="No recommendations yet" description="Browse all tutors to find the right fit.">

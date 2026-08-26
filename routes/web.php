@@ -31,6 +31,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Student\BookingController as StudentBookingController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\EnrollmentController;
+use App\Http\Controllers\Student\GameController as StudentGameController;
 use App\Http\Controllers\Student\ProfileController as StudentProfileController;
 use App\Http\Controllers\Student\ReportController as StudentReportController;
 use App\Http\Controllers\Tutor\AvailabilityController;
@@ -165,6 +166,10 @@ Route::middleware(['auth', 'verified', 'throttle:120,1'])->group(function () {
         Route::delete('/enrollments/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enrollments.destroy');
         Route::get('/reports', [StudentReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/export', [StudentReportController::class, 'export'])->name('reports.export');
+
+        Route::get('/games', [StudentGameController::class, 'index'])->name('games.index');
+        Route::get('/games/{game}', [StudentGameController::class, 'show'])->name('games.show');
+        Route::post('/games/{game}/score', [StudentGameController::class, 'storeScore'])->name('games.score')->middleware('throttle:30,1');
     });
 
     /*
