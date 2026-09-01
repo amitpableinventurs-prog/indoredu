@@ -6,6 +6,7 @@
             <button type="button" data-diff="hard" class="mb-diff-btn px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Hard</button>
         </div>
         <div class="flex items-center gap-4 text-sm font-medium text-gray-700 dark:text-gray-200">
+            <span>Level: <span id="mb-level">1</span></span>
             <span>Score: <span id="mb-score">0</span></span>
             <span>Time left: <span id="mb-time">60</span>s</span>
         </div>
@@ -37,6 +38,7 @@
     const playScreen = document.getElementById('mb-play-screen');
     const endScreen = document.getElementById('mb-end-screen');
     const scoreEl = document.getElementById('mb-score');
+    const levelEl = document.getElementById('mb-level');
     const timeEl = document.getElementById('mb-time');
     const questionEl = document.getElementById('mb-question');
     const answerInput = document.getElementById('mb-answer');
@@ -45,8 +47,12 @@
     const newBestEl = document.getElementById('mb-new-best');
     const diffButtons = document.querySelectorAll('.mb-diff-btn');
 
+    const MAX_LEVEL = 5;
+    const LEVEL_UP_EVERY = 5;
+
     let difficulty = 'medium';
     let score = 0;
+    let level = 1;
     let timeLeft = 60;
     let timer = null;
     let currentAnswer = 0;
@@ -63,15 +69,28 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    function updateLevel() {
+        const next = Math.min(MAX_LEVEL, 1 + Math.floor(score / LEVEL_UP_EVERY));
+        if (next !== level) {
+            level = next;
+            levelEl.textContent = String(level);
+        }
+    }
+
     function nextQuestion() {
+        updateLevel();
+
         const ranges = { easy: 10, medium: 30, hard: 100 };
-        const max = ranges[difficulty];
+        const mulCaps = { easy: 6, medium: 10, hard: 12 };
+        const boost = level - 1;
+        const max = ranges[difficulty] + boost * Math.round(ranges[difficulty] * 0.3);
         const op = ['+', '−', '×'][randInt(0, 2)];
         let a, b;
 
         if (op === '×') {
-            a = randInt(2, difficulty === 'hard' ? 12 : difficulty === 'medium' ? 10 : 6);
-            b = randInt(2, difficulty === 'hard' ? 12 : difficulty === 'medium' ? 10 : 6);
+            const mulCap = mulCaps[difficulty] + boost * 2;
+            a = randInt(2, mulCap);
+            b = randInt(2, mulCap);
         } else {
             a = randInt(1, max);
             b = randInt(1, max);
@@ -107,8 +126,10 @@
 
     function startGame() {
         score = 0;
+        level = 1;
         timeLeft = 60;
         scoreEl.textContent = '0';
+        levelEl.textContent = '1';
         timeEl.textContent = '60';
         feedback.textContent = '';
         startScreen.classList.add('hidden');

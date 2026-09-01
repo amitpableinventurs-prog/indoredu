@@ -1,12 +1,13 @@
 <div id="qd-game">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6 text-sm font-medium text-gray-700 dark:text-gray-200">
         <span>Question: <span id="qd-progress">0</span>/10</span>
+        <span>Level: <span id="qd-level">1</span></span>
         <span>Score: <span id="qd-score">0</span></span>
         <span>Time left: <span id="qd-time">15</span>s</span>
     </div>
 
     <div id="qd-start-screen" class="text-center py-10">
-        <p class="text-gray-600 dark:text-gray-300 mb-5">Answer 10 quick-fire questions across math, science and general knowledge. The faster you answer, the more points you earn.</p>
+        <p class="text-gray-600 dark:text-gray-300 mb-5">Answer 10 quick-fire questions across math, science and general knowledge. Answer correctly to level up — each level gives you less time and bigger points.</p>
         <x-primary-button type="button" id="qd-start-btn">Start Game</x-primary-button>
     </div>
 
@@ -55,6 +56,7 @@
     const endScreen = document.getElementById('qd-end-screen');
     const progressEl = document.getElementById('qd-progress');
     const scoreEl = document.getElementById('qd-score');
+    const levelEl = document.getElementById('qd-level');
     const timeEl = document.getElementById('qd-time');
     const subjectEl = document.getElementById('qd-subject');
     const questionEl = document.getElementById('qd-question');
@@ -65,11 +67,17 @@
 
     const ROUND_SIZE = 10;
     const QUESTION_SECONDS = 15;
+    const MAX_LEVEL = 3;
+    const LEVEL_UP_STREAK = 3;
+    const LEVEL_TIME = { 1: 15, 2: 12, 3: 9 };
+    const LEVEL_BONUS = { 1: 0, 2: 5, 3: 10 };
 
     let round = [];
     let index = 0;
     let score = 0;
     let correctCount = 0;
+    let level = 1;
+    let streak = 0;
     let timeLeft = QUESTION_SECONDS;
     let timer = null;
     let answered = false;
@@ -85,7 +93,7 @@
 
     function showQuestion() {
         answered = false;
-        timeLeft = QUESTION_SECONDS;
+        timeLeft = LEVEL_TIME[level];
         timeEl.textContent = String(timeLeft);
         progressEl.textContent = String(index + 1);
 
@@ -129,8 +137,20 @@
 
         if (choice === item.correct) {
             correctCount++;
-            score += 10 + timeLeft;
+            streak++;
+            score += 10 + timeLeft + LEVEL_BONUS[level];
             scoreEl.textContent = String(score);
+            if (streak >= LEVEL_UP_STREAK && level < MAX_LEVEL) {
+                streak = 0;
+                level++;
+                levelEl.textContent = String(level);
+            }
+        } else {
+            streak = 0;
+            if (level > 1) {
+                level--;
+                levelEl.textContent = String(level);
+            }
         }
 
         setTimeout(() => {
@@ -148,7 +168,10 @@
         index = 0;
         score = 0;
         correctCount = 0;
+        level = 1;
+        streak = 0;
         scoreEl.textContent = '0';
+        levelEl.textContent = '1';
 
         startScreen.classList.add('hidden');
         endScreen.classList.add('hidden');

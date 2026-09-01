@@ -1,12 +1,19 @@
 <div id="mm-game">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-6 text-sm font-medium text-gray-700 dark:text-gray-200">
-        <span>Moves: <span id="mm-moves">0</span></span>
-        <span>Matches: <span id="mm-matches">0</span>/8</span>
-        <span>Time: <span id="mm-time">0</span>s</span>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div class="flex gap-2" id="mm-level-select">
+            <button type="button" data-level="easy" class="mm-level-btn px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Level 1</button>
+            <button type="button" data-level="medium" class="mm-level-btn px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 ring-2 ring-indigo-500">Level 2</button>
+            <button type="button" data-level="hard" class="mm-level-btn px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Level 3</button>
+        </div>
+        <div class="flex items-center gap-4 text-sm font-medium text-gray-700 dark:text-gray-200">
+            <span>Moves: <span id="mm-moves">0</span></span>
+            <span>Matches: <span id="mm-matches">0</span>/<span id="mm-total">8</span></span>
+            <span>Time: <span id="mm-time">0</span>s</span>
+        </div>
     </div>
 
     <div id="mm-start-screen" class="text-center py-10">
-        <p class="text-gray-600 dark:text-gray-300 mb-5">Flip two cards at a time and match each question to its answer. Fewer moves and less time means a higher score.</p>
+        <p class="text-gray-600 dark:text-gray-300 mb-5">Pick a level above, then flip two cards at a time and match each question to its answer. Fewer moves and less time means a higher score.</p>
         <x-primary-button type="button" id="mm-start-btn">Start Game</x-primary-button>
     </div>
 
@@ -22,32 +29,68 @@
 
 <script>
 (function () {
-    const PAIRS = [
-        { a: '7 × 8', b: '56' },
-        { a: '9 × 6', b: '54' },
-        { a: 'H₂O', b: 'Water' },
-        { a: 'CO₂', b: 'Carbon Dioxide' },
-        { a: 'Capital of India', b: 'New Delhi' },
-        { a: 'Capital of Japan', b: 'Tokyo' },
-        { a: 'Synonym of "Happy"', b: 'Joyful' },
-        { a: 'Antonym of "Hot"', b: 'Cold' },
-    ];
+    const PAIR_SETS = {
+        easy: [
+            { a: '4 × 5', b: '20' },
+            { a: '3 × 3', b: '9' },
+            { a: 'H₂O', b: 'Water' },
+            { a: 'Capital of India', b: 'New Delhi' },
+            { a: 'Synonym of "Happy"', b: 'Joyful' },
+            { a: 'Antonym of "Hot"', b: 'Cold' },
+        ],
+        medium: [
+            { a: '7 × 8', b: '56' },
+            { a: '9 × 6', b: '54' },
+            { a: 'H₂O', b: 'Water' },
+            { a: 'CO₂', b: 'Carbon Dioxide' },
+            { a: 'Capital of India', b: 'New Delhi' },
+            { a: 'Capital of Japan', b: 'Tokyo' },
+            { a: 'Synonym of "Happy"', b: 'Joyful' },
+            { a: 'Antonym of "Hot"', b: 'Cold' },
+        ],
+        hard: [
+            { a: '7 × 8', b: '56' },
+            { a: '9 × 6', b: '54' },
+            { a: '12 × 11', b: '132' },
+            { a: 'H₂O', b: 'Water' },
+            { a: 'CO₂', b: 'Carbon Dioxide' },
+            { a: 'NaCl', b: 'Salt' },
+            { a: 'Capital of India', b: 'New Delhi' },
+            { a: 'Capital of Japan', b: 'Tokyo' },
+            { a: 'Capital of France', b: 'Paris' },
+            { a: 'Synonym of "Happy"', b: 'Joyful' },
+            { a: 'Antonym of "Hot"', b: 'Cold' },
+            { a: 'Antonym of "Ancient"', b: 'Modern' },
+        ],
+    };
 
     const startScreen = document.getElementById('mm-start-screen');
     const board = document.getElementById('mm-board');
     const endScreen = document.getElementById('mm-end-screen');
     const movesEl = document.getElementById('mm-moves');
     const matchesEl = document.getElementById('mm-matches');
+    const totalEl = document.getElementById('mm-total');
     const timeEl = document.getElementById('mm-time');
     const finalScoreEl = document.getElementById('mm-final-score');
     const newBestEl = document.getElementById('mm-new-best');
+    const levelButtons = document.querySelectorAll('.mm-level-btn');
 
+    let level = 'medium';
+    let PAIRS = PAIR_SETS[level];
     let moves = 0;
     let matches = 0;
     let elapsed = 0;
     let timer = null;
     let lock = false;
     let flipped = [];
+
+    levelButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            level = btn.dataset.level;
+            levelButtons.forEach((b) => b.classList.remove('ring-2', 'ring-indigo-500'));
+            btn.classList.add('ring-2', 'ring-indigo-500');
+        });
+    });
 
     function shuffle(arr) {
         const a = arr.slice();
@@ -119,6 +162,7 @@
     }
 
     function startGame() {
+        PAIRS = PAIR_SETS[level];
         moves = 0;
         matches = 0;
         elapsed = 0;
@@ -126,6 +170,7 @@
         lock = false;
         movesEl.textContent = '0';
         matchesEl.textContent = '0';
+        totalEl.textContent = String(PAIRS.length);
         timeEl.textContent = '0';
 
         startScreen.classList.add('hidden');

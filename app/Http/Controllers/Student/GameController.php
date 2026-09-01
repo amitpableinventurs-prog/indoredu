@@ -32,7 +32,7 @@ class GameController extends Controller
             'subject' => 'English',
             'icon' => '🔤',
             'color' => 'emerald',
-            'max_score' => 500,
+            'max_score' => 900,
         ],
         'memory-match' => [
             'title' => 'Memory Match',

@@ -1,5 +1,6 @@
 <div id="ws-game">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6 text-sm font-medium text-gray-700 dark:text-gray-200">
+        <span>Level: <span id="ws-level">1</span></span>
         <span>Score: <span id="ws-score">0</span></span>
         <span>Time left: <span id="ws-time">90</span>s</span>
     </div>
@@ -54,10 +55,17 @@
         { word: 'CONSTITUTION', hint: 'A country\'s written set of founding rules', category: 'Social Studies' },
     ];
 
+    const SHORT_WORDS = WORDS.filter((w) => w.word.length <= 8);
+    const MEDIUM_WORDS = WORDS.filter((w) => w.word.length > 8 && w.word.length <= 10);
+    const LONG_WORDS = WORDS.filter((w) => w.word.length > 10);
+    const MAX_LEVEL = 3;
+    const LEVEL_UP_EVERY = 3;
+
     const startScreen = document.getElementById('ws-start-screen');
     const playScreen = document.getElementById('ws-play-screen');
     const endScreen = document.getElementById('ws-end-screen');
     const scoreEl = document.getElementById('ws-score');
+    const levelEl = document.getElementById('ws-level');
     const timeEl = document.getElementById('ws-time');
     const scrambledEl = document.getElementById('ws-scrambled');
     const categoryEl = document.getElementById('ws-category');
@@ -69,9 +77,10 @@
     const skipBtn = document.getElementById('ws-skip-btn');
 
     let score = 0;
+    let wordsCorrect = 0;
+    let level = 1;
     let timeLeft = 90;
     let timer = null;
-    let deck = [];
     let current = null;
 
     function shuffle(arr) {
@@ -91,9 +100,30 @@
         return letters.join('');
     }
 
+    function updateLevel() {
+        const next = Math.min(MAX_LEVEL, 1 + Math.floor(wordsCorrect / LEVEL_UP_EVERY));
+        if (next !== level) {
+            level = next;
+            levelEl.textContent = String(level);
+        }
+    }
+
+    function poolForLevel() {
+        let pool = SHORT_WORDS;
+        if (level >= 2) pool = pool.concat(MEDIUM_WORDS);
+        if (level >= 3) pool = pool.concat(LONG_WORDS);
+        return pool;
+    }
+
     function nextWord() {
-        if (deck.length === 0) deck = shuffle(WORDS);
-        current = deck.pop();
+        updateLevel();
+        const pool = poolForLevel();
+        let pick;
+        do {
+            pick = pool[Math.floor(Math.random() * pool.length)];
+        } while (pool.length > 1 && current && pick.word === current.word);
+
+        current = pick;
         categoryEl.textContent = current.category;
         scrambledEl.textContent = scramble(current.word);
         hintBtn.disabled = false;
@@ -107,7 +137,8 @@
         const guess = answerInput.value.trim().toUpperCase();
 
         if (guess === current.word) {
-            score += 10;
+            score += 10 * level;
+            wordsCorrect++;
             scoreEl.textContent = String(score);
             feedback.textContent = '✓ Correct!';
             feedback.className = 'mt-3 text-sm h-5 text-emerald-600 dark:text-emerald-400';
@@ -136,9 +167,12 @@
 
     function startGame() {
         score = 0;
+        wordsCorrect = 0;
+        level = 1;
+        current = null;
         timeLeft = 90;
-        deck = shuffle(WORDS);
         scoreEl.textContent = '0';
+        levelEl.textContent = '1';
         timeEl.textContent = '90';
         startScreen.classList.add('hidden');
         endScreen.classList.add('hidden');
