@@ -130,6 +130,10 @@
                             @csrf
                             <x-primary-button type="submit" class="w-full justify-center">Enroll now</x-primary-button>
                         </form>
+                        @if ($course->tutorProfile?->user)
+                            <x-secondary-button type="button" class="mt-3 w-full justify-center" x-data x-on:click="$dispatch('open-modal', 'send-enquiry')">Ask the tutor</x-secondary-button>
+                            @include('enquiries._form-modal', ['tutor' => $course->tutorProfile->user, 'course' => $course])
+                        @endif
                     @else
                         <p class="mt-5 text-sm text-gray-500 dark:text-gray-400">Only student accounts can enroll.</p>
                     @endif

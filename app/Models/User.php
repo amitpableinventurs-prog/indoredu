@@ -116,6 +116,21 @@ class User extends Authenticatable implements MustVerifyEmail
             ->count();
     }
 
+    public function enquiriesSent(): HasMany
+    {
+        return $this->hasMany(Enquiry::class, 'student_id');
+    }
+
+    public function enquiriesReceived(): HasMany
+    {
+        return $this->hasMany(Enquiry::class, 'tutor_id');
+    }
+
+    public function pendingEnquiriesCount(): int
+    {
+        return $this->enquiriesReceived()->where('status', Enquiry::STATUS_PENDING)->count();
+    }
+
     public function paymentsMade(): HasMany
     {
         return $this->hasMany(Payment::class, 'payer_id');

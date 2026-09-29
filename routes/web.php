@@ -19,6 +19,7 @@ use App\Http\Controllers\ContentReportController;
 use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
@@ -116,6 +117,14 @@ Route::middleware(['auth', 'verified', 'throttle:120,1'])->group(function () {
         Route::post('/messages/{conversation}', [MessageController::class, 'store'])->name('messages.store');
         Route::post('/messages/start', [MessageController::class, 'start'])->name('messages.start');
     });
+
+    // Enquiries (student asks a tutor; tutor replies, declines or closes)
+    Route::get('/enquiries', [EnquiryController::class, 'index'])->name('enquiries.index');
+    Route::post('/enquiries', [EnquiryController::class, 'store'])->name('enquiries.store')->middleware('throttle:10,1');
+    Route::get('/enquiries/{enquiry}', [EnquiryController::class, 'show'])->name('enquiries.show');
+    Route::post('/enquiries/{enquiry}/reply', [EnquiryController::class, 'reply'])->name('enquiries.reply')->middleware('throttle:30,1');
+    Route::post('/enquiries/{enquiry}/decline', [EnquiryController::class, 'decline'])->name('enquiries.decline');
+    Route::post('/enquiries/{enquiry}/close', [EnquiryController::class, 'close'])->name('enquiries.close');
 
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');

@@ -35,7 +35,10 @@
 
                 @auth
                     @if (auth()->id() !== $u->id)
-                        <div class="mt-4 flex gap-3">
+                        <div class="mt-4 flex flex-wrap items-center gap-3">
+                            @if (auth()->user()->isStudent())
+                                <x-primary-button type="button" x-data x-on:click="$dispatch('open-modal', 'send-enquiry')">Send enquiry</x-primary-button>
+                            @endif
                             <form action="{{ route('messages.start') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ $u->id }}">
@@ -50,6 +53,9 @@
                                 <button type="submit" class="text-sm text-gray-400 hover:text-red-600 dark:hover:text-red-400">Report</button>
                             </form>
                         </div>
+                        @if (auth()->user()->isStudent())
+                            @include('enquiries._form-modal', ['tutor' => $u, 'subjects' => $tutorProfile->subjects])
+                        @endif
                     @endif
                 @endauth
             </div>

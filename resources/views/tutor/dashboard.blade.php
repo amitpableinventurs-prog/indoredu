@@ -45,6 +45,16 @@
                 @endif
             @endif
 
+            @if ($stats['pending_enquiries'] > 0)
+                <a href="{{ route('enquiries.index', ['status' => 'pending']) }}"
+                   class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 hover:border-amber-300">
+                    <span class="text-sm font-medium text-amber-800 dark:text-amber-300">
+                        {{ $stats['pending_enquiries'] }} student {{ \Illuminate\Support\Str::plural('enquiry', $stats['pending_enquiries']) }} waiting for your reply
+                    </span>
+                    <span class="text-sm text-amber-700 dark:text-amber-400">View &rarr;</span>
+                </a>
+            @endif
+
             <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <x-stat-tile label="Total sessions" :value="$stats['total_sessions']" />
                 <x-stat-tile label="Rating" :value="number_format($stats['rating_avg'], 1).' ('.$stats['rating_count'].')'" />

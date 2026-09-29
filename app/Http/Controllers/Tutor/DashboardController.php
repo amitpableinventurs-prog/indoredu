@@ -29,6 +29,7 @@ class DashboardController extends Controller
             'upcoming_count' => $user->bookingsAsTutor()->whereIn('status', [Booking::STATUS_PENDING, Booking::STATUS_CONFIRMED])->where('scheduled_date', '>=', now()->toDateString())->count(),
             'earnings_this_month' => $user->paymentsReceived()->where('status', 'completed')->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)->sum('net_amount'),
             'unread_messages' => $user->unreadMessagesCount(),
+            'pending_enquiries' => $user->pendingEnquiriesCount(),
         ];
 
         return view('tutor.dashboard', compact('profile', 'upcomingBookings', 'stats'));

@@ -34,6 +34,15 @@
                                 ($data['sender_name'] ?? 'Someone').': '.($data['preview'] ?? ''),
                                 isset($data['conversation_id']) ? route('messages.show', $data['conversation_id']) : null,
                             ],
+                            'EnquiryNotification' => [
+                                match ($data['event'] ?? '') {
+                                    'received' => ($data['student_name'] ?? 'A student').' sent you an enquiry: '.($data['title'] ?? ''),
+                                    'replied' => ($data['tutor_name'] ?? 'The tutor').' replied to your enquiry: '.($data['title'] ?? ''),
+                                    'declined' => ($data['tutor_name'] ?? 'The tutor').' declined your enquiry: '.($data['title'] ?? ''),
+                                    default => 'Your enquiry was updated.',
+                                },
+                                isset($data['enquiry_id']) ? route('enquiries.show', $data['enquiry_id']) : null,
+                            ],
                             'NewReviewNotification' => [
                                 ($data['student_name'] ?? 'A student').' left you a '.($data['rating'] ?? '?').'-star review',
                                 route('tutor.students.index'),

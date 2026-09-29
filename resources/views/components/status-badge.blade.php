@@ -22,7 +22,10 @@ $colors = [
     'paid' => 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
     'resolved' => 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
     'dismissed' => 'bg-gray-100 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300',
-    'verified' => 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+    'replied' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
+    'declined' => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+    'closed' => 'bg-gray-100 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300',
+    'verified' =>'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
 ];
 $class = $colors[$status] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300';
 @endphp

@@ -19,8 +19,16 @@
                             <x-nav-link :href="route('student.bookings.index')" :active="request()->routeIs('student.bookings.*')">{{ __('My Bookings') }}</x-nav-link>
                             <x-nav-link :href="route('student.reports.index')" :active="request()->routeIs('student.reports.*')">{{ __('Progress') }}</x-nav-link>
                             <x-nav-link :href="route('student.games.index')" :active="request()->routeIs('student.games.*')">{{ __('Games') }}</x-nav-link>
+                            <x-nav-link :href="route('enquiries.index')" :active="request()->routeIs('enquiries.*')">{{ __('Enquiries') }}</x-nav-link>
                         @elseif (auth()->user()->isTutor())
                             <x-nav-link :href="route('tutor.bookings.index')" :active="request()->routeIs('tutor.bookings.*')">{{ __('Bookings') }}</x-nav-link>
+                            <x-nav-link :href="route('enquiries.index')" :active="request()->routeIs('enquiries.*')">
+                                {{ __('Enquiries') }}
+                                @php $pendingEnquiries = auth()->user()->pendingEnquiriesCount(); @endphp
+                                @if ($pendingEnquiries > 0)
+                                    <span class="ms-1.5 inline-flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">{{ $pendingEnquiries > 9 ? '9+' : $pendingEnquiries }}</span>
+                                @endif
+                            </x-nav-link>
                             <x-nav-link :href="route('tutor.courses.index')" :active="request()->routeIs('tutor.courses.*')">{{ __('Courses') }}</x-nav-link>
                             <x-nav-link :href="route('tutor.availability.index')" :active="request()->routeIs('tutor.availability.*')">{{ __('Schedule') }}</x-nav-link>
                             <x-nav-link :href="route('tutor.students.index')" :active="request()->routeIs('tutor.students.*')">{{ __('Students') }}</x-nav-link>
@@ -109,8 +117,10 @@
                     <x-responsive-nav-link :href="route('student.bookings.index')">{{ __('My Bookings') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('student.reports.index')">{{ __('Progress') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('student.games.index')">{{ __('Games') }}</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('enquiries.index')">{{ __('Enquiries') }}</x-responsive-nav-link>
                 @elseif (auth()->user()->isTutor())
                     <x-responsive-nav-link :href="route('tutor.bookings.index')">{{ __('Bookings') }}</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('enquiries.index')">{{ __('Enquiries') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('tutor.courses.index')">{{ __('Courses') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('tutor.availability.index')">{{ __('Schedule') }}</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('tutor.students.index')">{{ __('Students') }}</x-responsive-nav-link>
