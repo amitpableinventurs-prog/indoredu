@@ -47,7 +47,15 @@
                                 @if ($enquiry->subject) &middot; {{ $enquiry->subject->name }} @endif
                                 @if ($enquiry->grade) &middot; {{ \App\Models\Course::GRADES[$enquiry->grade] ?? $enquiry->grade }} @endif
                             </p>
-                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">{{ \Illuminate\Support\Str::limit($enquiry->message, 120) }}</p>
+                            @php $qs = $enquiry->questionList(); @endphp
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">
+                                @if ($qs)
+                                    <span class="font-medium">{{ count($qs) }} {{ \Illuminate\Support\Str::plural('question', count($qs)) }}:</span>
+                                    {{ implode(' · ', array_values($qs)) }}
+                                @else
+                                    {{ \Illuminate\Support\Str::limit($enquiry->message, 120) }}
+                                @endif
+                            </p>
                         </div>
                         <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap shrink-0">{{ $enquiry->created_at->diffForHumans() }}</span>
                     </a>

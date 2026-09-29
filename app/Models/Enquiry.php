@@ -18,15 +18,31 @@ class Enquiry extends Model
         'either' => 'Either',
     ];
 
+    /** Common questions a student can tick; the tutor answers each one. */
+    const QUESTIONS = [
+        'fees' => 'What is your fee (per class / per month)?',
+        'trial' => 'Do you offer a free trial or demo class?',
+        'timings' => 'What are your available timings?',
+        'board' => 'Which boards / syllabus do you teach (CBSE, ICSE, State)?',
+        'mode' => 'Do you teach online, at home, or both?',
+        'batch' => 'Is it one-to-one or group / batch classes?',
+        'material' => 'Do you provide notes, study material or test series?',
+        'doubts' => 'Can I ask doubts outside class time?',
+        'progress' => 'How do you track progress and update parents?',
+        'experience' => 'How much experience do you have with this class / subject?',
+    ];
+
     protected $fillable = [
         'student_id', 'tutor_id', 'subject_id', 'course_id', 'conversation_id',
-        'title', 'message', 'grade', 'preferred_mode', 'preferred_time',
-        'status', 'tutor_reply', 'replied_at', 'closed_at',
+        'title', 'questions', 'message', 'grade', 'preferred_mode', 'preferred_time',
+        'status', 'tutor_reply', 'answers', 'replied_at', 'closed_at',
     ];
 
     protected function casts(): array
     {
         return [
+            'questions' => 'array',
+            'answers' => 'array',
             'replied_at' => 'datetime',
             'closed_at' => 'datetime',
         ];
@@ -55,6 +71,17 @@ class Enquiry extends Model
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(Conversation::class);
+    }
+
+    /**
+     * The ticked questions as [key => label], skipping keys no longer offered.
+     */
+    public function questionList(): array
+    {
+        return collect($this->questions ?? [])
+            ->filter(fn ($key) => isset(self::QUESTIONS[$key]))
+            ->mapWithKeys(fn ($key) => [$key => self::QUESTIONS[$key]])
+            ->all();
     }
 
     public function isOpen(): bool

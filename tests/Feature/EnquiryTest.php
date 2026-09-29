@@ -26,11 +26,11 @@ class EnquiryTest extends TestCase
     {
         $this->actingAs($student)->post('/enquiries', [
             'tutor_id' => $tutor->id,
-            'title' => 'Help with Class 10 Maths',
+            'questions' => ['trial', 'fees', 'fees'],
             'message' => 'Can you help me prepare for board exams?',
             'grade' => 'class_10',
             'preferred_mode' => 'online',
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
         return Enquiry::latest('id')->firstOrFail();
     }
@@ -47,7 +47,11 @@ class EnquiryTest extends TestCase
         $this->assertSame($tutor->id, $enquiry->tutor_id);
         Notification::assertSentTo($tutor, EnquiryNotification::class, fn ($n) => $n->event === 'received');
 
-        $this->actingAs($tutor)->get('/enquiries')->assertOk()->assertSee('Help with Class 10 Maths');
+        $this->assertSame(['fees', 'trial'], $enquiry->questions);
+        $this->assertSame('General enquiry', $enquiry->title);
+        $this->actingAs($tutor)->get('/enquiries')->assertOk()->assertSee('2 questions');
+        $this->actingAs($tutor)->get("/enquiries/{$enquiry->id}")->assertOk()
+            ->assertSee(Enquiry::QUESTIONS['fees'])->assertSee('Send answers');
         $this->actingAs($student)->get("/enquiries/{$enquiry->id}")->assertOk()->assertSee('Waiting for');
     }
 
@@ -58,12 +62,21 @@ class EnquiryTest extends TestCase
         $tutor = $this->makeTutor();
         $enquiry = $this->sendEnquiry($student, $tutor);
 
+        // Every ticked question must be answered.
         $this->actingAs($tutor)->post("/enquiries/{$enquiry->id}/reply", [
-            'tutor_reply' => 'Sure, I can take 3 classes a week.',
-        ])->assertRedirect();
+            'answers' => ['fees' => 'Rs 2000 / month'],
+            'tutor_reply' => 'Yes, 3 classes a week.',
+        ])->assertSessionHasErrors('answers.trial');
+
+        $this->actingAs($tutor)->post("/enquiries/{$enquiry->id}/reply", [
+            'answers' => ['fees' => 'Rs 2000 / month', 'trial' => 'First class is free'],
+            'tutor_reply' => 'Yes, 3 classes a week.',
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
         $enquiry->refresh();
         $this->assertSame(Enquiry::STATUS_REPLIED, $enquiry->status);
+        $this->assertSame('First class is free', $enquiry->answers['trial']);
+        $this->actingAs($student)->get("/enquiries/{$enquiry->id}")->assertOk()->assertSee('Rs 2000 / month');
         $this->assertNotNull($enquiry->conversation_id);
         $this->assertEqualsCanonicalizing(
             [$student->id, $tutor->id],
@@ -110,8 +123,13 @@ class EnquiryTest extends TestCase
 
         $this->actingAs($tutor)->post('/enquiries', [
             'tutor_id' => $this->makeTutor()->id,
-            'title' => 'x',
             'message' => 'y',
         ])->assertForbidden();
+
+        // A student must tick a question or write one.
+        $this->actingAs($student)->post('/enquiries', ['tutor_id' => $tutor->id])
+            ->assertSessionHasErrors('message');
+        $this->actingAs($student)->post('/enquiries', ['tutor_id' => $tutor->id, 'questions' => ['hack']])
+            ->assertSessionHasErrors('questions.0');
     }
 }

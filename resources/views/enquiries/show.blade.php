@@ -18,48 +18,128 @@
     <div class="py-12">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 grid lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-6">
-                <!-- Student's enquiry -->
-                <x-card>
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-semibold text-sm shrink-0">
-                            {{ $student?->initials() ?? '?' }}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-baseline justify-between gap-2">
-                                <p class="font-medium text-gray-900 dark:text-gray-100">{{ $student?->name ?? 'Deleted user' }} <span class="text-xs font-normal text-gray-400">(student)</span></p>
-                                <span class="text-xs text-gray-400 dark:text-gray-500">{{ $enquiry->created_at->format('M j, Y · g:i A') }}</span>
-                            </div>
-                            <p class="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $enquiry->message }}</p>
-                        </div>
+                @php
+                    $questions = $enquiry->questionList();
+                    $answers = $enquiry->answers ?? [];
+                    $canReply = $me->can('reply', $enquiry);
+                    $isDeclined = $enquiry->status === 'declined';
+                @endphp
+
+                <!-- Who asked -->
+                <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Asked by <span class="font-medium text-gray-900 dark:text-gray-100">{{ $student?->name ?? 'Deleted user' }}</span>
+                        to <span class="font-medium text-gray-900 dark:text-gray-100">{{ $tutor?->name ?? 'Deleted user' }}</span>
+                        &middot; {{ $enquiry->created_at->format('M j, Y · g:i A') }}
+                    </p>
+                    <span class="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        Private between student and tutor
+                    </span>
+                </div>
+
+                @if ($enquiry->status === 'pending' && $me->id === $enquiry->student_id)
+                    <div class="rounded-lg border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-300">
+                        Waiting for {{ $tutor?->name ?? 'the tutor' }} to answer. You'll get a notification as soon as they respond.
                     </div>
+                @endif
+
+                <!-- Questions & answers (FAQ style). For the tutor, each answer is an input. -->
+                @if ($canReply)
+                    <form action="{{ route('enquiries.reply', $enquiry) }}" method="POST" class="space-y-6">
+                        @csrf
+                @endif
+
+                <x-card title="Questions & answers" :subtitle="$canReply ? 'Answer each question. Your answers will also start a chat with the student in Messages.' : null">
+                    <div class="divide-y divide-gray-100 dark:divide-gray-700 -my-2">
+                        @foreach ($questions as $key => $label)
+                            <div class="py-4">
+                                <p class="flex gap-2 font-medium text-gray-900 dark:text-gray-100 text-sm">
+                                    <span class="shrink-0 text-indigo-600 dark:text-indigo-400">Q.</span>{{ $label }}
+                                </p>
+                                <div class="mt-2 flex gap-2 text-sm">
+                                    <span class="shrink-0 font-medium text-green-600 dark:text-green-400">A.</span>
+                                    @if ($canReply)
+                                        <div class="flex-1">
+                                            <textarea name="answers[{{ $key }}]" rows="2" maxlength="1000" required
+                                                      class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">{{ old("answers.$key") }}</textarea>
+                                            <x-input-error :messages="$errors->get('answers.'.$key)" class="mt-1" />
+                                        </div>
+                                    @elseif (isset($answers[$key]))
+                                        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $answers[$key] }}</p>
+                                    @else
+                                        <p class="italic text-gray-400 dark:text-gray-500">{{ $isDeclined ? 'Not answered' : 'Awaiting answer' }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+
+                        @if ($enquiry->message || ! $questions)
+                            <div class="py-4">
+                                <p class="flex gap-2 font-medium text-gray-900 dark:text-gray-100 text-sm">
+                                    <span class="shrink-0 text-indigo-600 dark:text-indigo-400">Q.</span>
+                                    <span class="whitespace-pre-line">{{ $enquiry->message ?: 'General enquiry' }}</span>
+                                </p>
+                                <div class="mt-2 flex gap-2 text-sm">
+                                    <span class="shrink-0 font-medium text-green-600 dark:text-green-400">A.</span>
+                                    @if ($canReply)
+                                        <div class="flex-1">
+                                            <textarea name="tutor_reply" rows="3" maxlength="3000" required
+                                                      class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">{{ old('tutor_reply') }}</textarea>
+                                            <x-input-error :messages="$errors->get('tutor_reply')" class="mt-1" />
+                                        </div>
+                                    @elseif ($enquiry->tutor_reply && ! $isDeclined)
+                                        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $enquiry->tutor_reply }}</p>
+                                    @else
+                                        <p class="italic text-gray-400 dark:text-gray-500">{{ $isDeclined ? 'Not answered' : 'Awaiting answer' }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        @elseif ($canReply)
+                            <div class="py-4">
+                                <x-input-label for="tutor_reply" value="Anything else to add? (optional)" />
+                                <textarea id="tutor_reply" name="tutor_reply" rows="2" maxlength="3000" class="{{ $textareaClass }}"
+                                          placeholder="e.g. Happy to schedule a trial class this week.">{{ old('tutor_reply') }}</textarea>
+                            </div>
+                        @elseif ($enquiry->tutor_reply && ! $isDeclined)
+                            <div class="py-4 text-sm">
+                                <p class="font-medium text-gray-900 dark:text-gray-100">Note from {{ $tutor?->name ?? 'the tutor' }}</p>
+                                <p class="mt-1 text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $enquiry->tutor_reply }}</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if ($enquiry->replied_at && ! $isDeclined)
+                        <p class="mt-4 text-xs text-gray-400 dark:text-gray-500">Answered by {{ $tutor?->name }} on {{ $enquiry->replied_at->format('M j, Y · g:i A') }}</p>
+                    @endif
                 </x-card>
 
-                <!-- Tutor's reply -->
-                @if ($enquiry->tutor_reply)
-                    <x-card class="{{ $enquiry->status === 'declined' ? 'border-red-200 dark:border-red-900' : 'border-indigo-200 dark:border-indigo-900' }}">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 flex items-center justify-center font-semibold text-sm shrink-0">
-                                {{ $tutor?->initials() ?? '?' }}
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="flex flex-wrap items-baseline justify-between gap-2">
-                                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ $tutor?->name ?? 'Deleted user' }} <span class="text-xs font-normal text-gray-400">(tutor)</span></p>
-                                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ $enquiry->replied_at?->format('M j, Y · g:i A') }}</span>
-                                </div>
-                                <p class="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $enquiry->tutor_reply }}</p>
-                            </div>
+                @if ($canReply)
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <x-primary-button type="submit">Send answers</x-primary-button>
+                            @can('decline', $enquiry)
+                                <button type="button" x-data x-on:click="$dispatch('open-modal', 'decline-enquiry')"
+                                        class="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
+                                    Can't help with this? Decline
+                                </button>
+                            @endcan
                         </div>
-                    </x-card>
-                @elseif ($enquiry->status === 'pending' && $me->id === $enquiry->student_id)
-                    <div class="rounded-lg border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-300">
-                        Waiting for {{ $tutor?->name ?? 'the tutor' }} to reply. You'll get a notification as soon as they respond.
+                    </form>
+                @endif
+
+                @if ($isDeclined)
+                    <div class="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-800 dark:text-red-300">
+                        <p class="font-medium">{{ $tutor?->name ?? 'The tutor' }} declined this enquiry.</p>
+                        @if ($enquiry->tutor_reply)
+                            <p class="mt-1 whitespace-pre-line">{{ $enquiry->tutor_reply }}</p>
+                        @endif
                     </div>
                 @endif
 
                 <!-- Connected: continue in Messages -->
                 @if ($enquiry->conversation_id && $enquiry->involves($me))
                     <div class="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 p-4 flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-sm text-green-800 dark:text-green-300">You're connected! Continue the conversation in Messages.</p>
+                        <p class="text-sm text-green-800 dark:text-green-300">You're connected! Ask follow-up questions in Messages.</p>
                         <a href="{{ route('messages.show', $enquiry->conversation_id) }}"
                            class="inline-flex items-center px-4 py-2 bg-green-600 rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-500">
                             Open chat
@@ -67,29 +147,7 @@
                     </div>
                 @endif
 
-                <!-- Tutor actions -->
-                @can('reply', $enquiry)
-                    <x-card title="Reply to {{ $student?->name }}" subtitle="Your reply will also start a chat with the student in Messages.">
-                        <form action="{{ route('enquiries.reply', $enquiry) }}" method="POST" class="space-y-4">
-                            @csrf
-                            <div>
-                                <x-input-label for="tutor_reply" value="Your reply" />
-                                <textarea id="tutor_reply" name="tutor_reply" rows="5" maxlength="3000" required class="{{ $textareaClass }}"
-                                          placeholder="Answer the student's question, share your timings, fees, or suggest a trial session…">{{ old('tutor_reply') }}</textarea>
-                                <x-input-error :messages="$errors->get('tutor_reply')" class="mt-1" />
-                            </div>
-                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                <x-primary-button type="submit">Send reply</x-primary-button>
-                                @can('decline', $enquiry)
-                                    <button type="button" x-data x-on:click="$dispatch('open-modal', 'decline-enquiry')"
-                                            class="text-sm text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
-                                        Can't help with this? Decline
-                                    </button>
-                                @endcan
-                            </div>
-                        </form>
-                    </x-card>
-
+                @if ($canReply)
                     @can('decline', $enquiry)
                         <x-modal name="decline-enquiry" maxWidth="md" focusable>
                             <form action="{{ route('enquiries.decline', $enquiry) }}" method="POST" class="p-6 space-y-4">
@@ -107,7 +165,7 @@
                             </form>
                         </x-modal>
                     @endcan
-                @endcan
+                @endif
             </div>
 
             <!-- Details sidebar -->

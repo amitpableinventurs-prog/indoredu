@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\Course;
 use App\Models\Enquiry;
 use App\Models\Message;
+use App\Models\Subject;
 use App\Models\TutorProfile;
 use App\Models\User;
 use App\Notifications\EnquiryNotification;
@@ -63,11 +64,14 @@ class EnquiryController extends Controller
             'tutor_id' => ['required', 'exists:users,id'],
             'subject_id' => ['nullable', 'exists:subjects,id'],
             'course_id' => ['nullable', 'exists:courses,id'],
-            'title' => ['required', 'string', 'max:150'],
-            'message' => ['required', 'string', 'max:3000'],
+            'questions' => ['nullable', 'array'],
+            'questions.*' => ['string', Rule::in(array_keys(Enquiry::QUESTIONS))],
+            'message' => ['required_without:questions', 'nullable', 'string', 'max:3000'],
             'grade' => ['nullable', Rule::in(array_keys(Course::GRADES))],
             'preferred_mode' => ['nullable', Rule::in(array_keys(Enquiry::MODES))],
             'preferred_time' => ['nullable', 'string', 'max:100'],
+        ], [
+            'message.required_without' => 'Tick at least one question or write your own.',
         ]);
 
         $tutor = User::findOrFail($data['tutor_id']);
@@ -78,9 +82,17 @@ class EnquiryController extends Controller
             abort(403, 'You are unable to contact this tutor.');
         }
 
-        if (! empty($data['course_id']) && ! $profile->courses()->whereKey($data['course_id'])->exists()) {
-            $data['course_id'] = null;
-        }
+        $course = ! empty($data['course_id'])
+            ? $profile->courses()->whereKey($data['course_id'])->first()
+            : null;
+        $data['course_id'] = $course?->id;
+
+        // Keep the ticked questions in the order they're offered, without duplicates.
+        $data['questions'] = array_values(array_intersect(array_keys(Enquiry::QUESTIONS), $data['questions'] ?? []));
+
+        $subjectName = ! empty($data['subject_id']) ? Subject::find($data['subject_id'])?->name : null;
+        $data['title'] = $course ? "About \"{$course->title}\""
+            : ($subjectName ? "{$subjectName} tuition enquiry" : 'General enquiry');
 
         $enquiry = Enquiry::create($data + [
             'student_id' => $student->id,
@@ -101,11 +113,24 @@ class EnquiryController extends Controller
     {
         $this->authorize('reply', $enquiry);
 
-        $data = $request->validate([
-            'tutor_reply' => ['required', 'string', 'max:3000'],
+        $questions = $enquiry->questionList();
+
+        $rules = [
+            // A general reply is needed when the student wrote their own question
+            // (or ticked none); otherwise it's an optional extra note.
+            'tutor_reply' => [($enquiry->message || ! $questions) ? 'required' : 'nullable', 'string', 'max:3000'],
+        ];
+        foreach (array_keys($questions) as $key) {
+            $rules["answers.$key"] = ['required', 'string', 'max:1000'];
+        }
+
+        $data = $request->validate($rules, [
+            'answers.*.required' => 'Please answer each question the student asked.',
         ]);
 
-        DB::transaction(function () use ($enquiry, $data) {
+        $answers = collect($questions)->mapWithKeys(fn ($label, $key) => [$key => $data['answers'][$key]])->all();
+
+        DB::transaction(function () use ($enquiry, $data, $questions, $answers) {
             $conversation = Conversation::whereNull('booking_id')
                 ->whereHas('participants', fn ($q) => $q->where('user_id', $enquiry->student_id))
                 ->whereHas('participants', fn ($q) => $q->where('user_id', $enquiry->tutor_id))
@@ -116,23 +141,36 @@ class EnquiryController extends Controller
                 $conversation->participants()->attach([$enquiry->student_id, $enquiry->tutor_id]);
             }
 
+            $studentBody = collect(["Enquiry: {$enquiry->title}"])
+                ->merge(collect($questions)->map(fn ($label) => "• {$label}"))
+                ->push($enquiry->message)
+                ->filter()
+                ->join("\n");
+
+            $tutorBody = collect($questions)
+                ->map(fn ($label, $key) => "Q: {$label}\nA: {$answers[$key]}")
+                ->push($data['tutor_reply'] ?? null)
+                ->filter()
+                ->join("\n\n");
+
             Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id' => $enquiry->student_id,
-                'body' => "Enquiry: {$enquiry->title}\n\n{$enquiry->message}",
+                'body' => $studentBody,
             ]);
 
             Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id' => $enquiry->tutor_id,
-                'body' => $data['tutor_reply'],
+                'body' => $tutorBody,
             ]);
 
             $conversation->update(['last_message_at' => now()]);
             $conversation->participants()->updateExistingPivot($enquiry->tutor_id, ['last_read_at' => now()]);
 
             $enquiry->update([
-                'tutor_reply' => $data['tutor_reply'],
+                'tutor_reply' => $data['tutor_reply'] ?? null,
+                'answers' => $answers,
                 'status' => Enquiry::STATUS_REPLIED,
                 'replied_at' => now(),
                 'conversation_id' => $conversation->id,

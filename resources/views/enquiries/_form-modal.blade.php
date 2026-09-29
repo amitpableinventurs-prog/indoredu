@@ -1,16 +1,16 @@
 {{--
     Enquiry form in a modal. Expects: $tutor (User), optional $subjects (collection),
-    optional $course (Course) to pre-fill the enquiry for a specific course.
+    optional $course (Course) to tie the enquiry to a specific course.
 --}}
 @php
     $course = $course ?? null;
     $subjects = $subjects ?? collect();
-    $defaultTitle = $course ? "Enquiry about \"{$course->title}\"" : '';
     $selectClass = 'mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
+    $picked = old('questions', []);
 @endphp
 
-<x-modal name="send-enquiry" :show="$errors->hasAny(['title', 'message', 'grade', 'preferred_mode', 'preferred_time'])" focusable>
-    <form action="{{ route('enquiries.store') }}" method="POST" class="p-6 space-y-4">
+<x-modal name="send-enquiry" :show="$errors->hasAny(['questions', 'questions.*', 'message', 'grade', 'preferred_mode', 'preferred_time'])" focusable>
+    <form action="{{ route('enquiries.store') }}" method="POST" class="p-6 space-y-5">
         @csrf
         <input type="hidden" name="tutor_id" value="{{ $tutor->id }}">
         @if ($course)
@@ -20,14 +20,30 @@
 
         <div>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Send an enquiry to {{ $tutor->name }}</h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ask about subjects, timings, fees or anything else before you book. The tutor will be notified and can reply directly.</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Tick the questions you want answered. Only you and {{ $tutor->name }} can see this enquiry and the replies.
+            </p>
         </div>
 
+        <fieldset>
+            <legend class="block font-medium text-sm text-gray-700 dark:text-gray-300">What would you like to know? <span class="font-normal text-gray-400">(select any)</span></legend>
+            <div class="mt-2 grid sm:grid-cols-2 gap-2">
+                @foreach (\App\Models\Enquiry::QUESTIONS as $key => $label)
+                    <label class="flex items-start gap-2.5 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 dark:has-[:checked]:bg-indigo-950/40">
+                        <input type="checkbox" name="questions[]" value="{{ $key }}" @checked(in_array($key, $picked, true))
+                               class="mt-0.5 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-indigo-600 focus:ring-indigo-500">
+                        <span>{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+            <x-input-error :messages="$errors->get('questions.*')" class="mt-1" />
+        </fieldset>
+
         <div>
-            <x-input-label for="enquiry_title" value="Topic" />
-            <x-text-input id="enquiry_title" name="title" type="text" class="mt-1 block w-full" maxlength="150" required
-                          :value="old('title', $defaultTitle)" placeholder="e.g. Need help with Class 10 Maths" />
-            <x-input-error :messages="$errors->get('title')" class="mt-1" />
+            <x-input-label for="enquiry_message" value="Any other question? (optional)" />
+            <textarea id="enquiry_message" name="message" rows="3" maxlength="3000"
+                      class="{{ $selectClass }}" placeholder="Write your own question here…">{{ old('message') }}</textarea>
+            <x-input-error :messages="$errors->get('message')" class="mt-1" />
         </div>
 
         <div class="grid sm:grid-cols-2 gap-4">
@@ -70,13 +86,6 @@
                 <x-text-input id="enquiry_time" name="preferred_time" type="text" class="mt-1 block w-full" maxlength="100"
                               :value="old('preferred_time')" placeholder="e.g. Weekdays after 5 PM" />
             </div>
-        </div>
-
-        <div>
-            <x-input-label for="enquiry_message" value="Your question" />
-            <textarea id="enquiry_message" name="message" rows="5" maxlength="3000" required
-                      class="{{ $selectClass }}" placeholder="Tell the tutor what you need help with…">{{ old('message') }}</textarea>
-            <x-input-error :messages="$errors->get('message')" class="mt-1" />
         </div>
 
         <div class="flex justify-end gap-3">
